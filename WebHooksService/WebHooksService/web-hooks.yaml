@@ -1,0 +1,7 @@
+web-hooks:
+  test: |-
+    echo 123
+    echo 456
+  abc/def: |-
+    ls -la
+    cd /
