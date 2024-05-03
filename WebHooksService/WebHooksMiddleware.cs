@@ -19,7 +19,7 @@ public class WebHooksMiddleware : IMiddleware
             path = path[1..];
         }
 
-        var webHookConfiguration = this.configuration.GetSection($"web-hooks:{path}");
+        var webHookConfiguration = this.configuration.GetSection($"WebHooks:{path}");
         if (!webHookConfiguration.Exists())
         {
             context.Response.StatusCode = StatusCodes.Status404NotFound;

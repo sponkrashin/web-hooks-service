@@ -6,15 +6,4 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="NetEscapades.Configuration.Yaml" Version="3.1.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="configuration.yaml" />
-    <Content Include="web-hooks.yaml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
 </Project>
