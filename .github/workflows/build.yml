@@ -1,4 +1,4 @@
-name: API build
+name: Build
 
 on:
   push:
@@ -8,12 +8,16 @@ jobs:
   build:
     runs-on: ubuntu-22.04
 
+    defaults:
+      run:
+        working-directory: ./
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup .NET Core
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
 
@@ -37,13 +41,17 @@ jobs:
     needs: build
     if: github.ref == 'refs/heads/master'
 
+    defaults:
+      run:
+        working-directory: ./
+
     permissions:
       packages: write
       contents: write
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - uses: actions/download-artifact@master
         with:
@@ -65,5 +73,6 @@ jobs:
       - name: Build and push Docker images
         uses: docker/build-push-action@v5
         with:
+          context: ./
           push: true
           tags: ghcr.io/${{ env.IMAGE_NAME }}:${{ env.TAG_NAME }}
