@@ -28,8 +28,20 @@ public class WebHooksMiddleware : IMiddleware
 
         try
         {
-            var processArgs = string.Join(" && ", webHookConfiguration.Get<IEnumerable<string>>() ?? Enumerable.Empty<string>());
-            var processStartInfo = new ProcessStartInfo("cmd", $"/C \"{processArgs}\"");
+            var webHookCommands = webHookConfiguration.Get<IEnumerable<string>>() ?? Enumerable.Empty<string>();
+
+            ProcessStartInfo processStartInfo;
+
+            if (OperatingSystem.IsWindows())
+            {
+                var processArgs = string.Join(" && ", webHookCommands);
+                processStartInfo = new ProcessStartInfo("cmd", $"/C \"{processArgs}\"");
+            }
+            else
+            {
+                var processArgs = string.Join(";", webHookCommands);
+                processStartInfo = new ProcessStartInfo("bash", $"-c \"{processArgs}\"");
+            }
 
             var process = Process.Start(processStartInfo);
             await process!.WaitForExitAsync();
