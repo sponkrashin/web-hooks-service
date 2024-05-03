@@ -1,9 +1,8 @@
 web-hooks:
-  /: |-
-    whoami
-  test: |-
-    echo 123
-    echo 456
-  abc/def: |-
-    ls -la
-    cd /
+  /:
+    - whoami >> output.txt
+  test:
+    - echo 123 >> output.txt
+    - echo 456 >> output.txt
+  abc/def:
+    - dir >> output.txt
