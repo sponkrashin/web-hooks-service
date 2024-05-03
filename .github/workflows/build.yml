@@ -65,5 +65,6 @@ jobs:
       - name: Build and push Docker images
         uses: docker/build-push-action@v5
         with:
+          context: ./
           push: true
           tags: ghcr.io/${{ env.IMAGE_NAME }}:${{ env.TAG_NAME }}
