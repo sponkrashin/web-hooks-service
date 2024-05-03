@@ -1,0 +1,69 @@
+name: API build
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build -c Release --no-restore
+
+      - name: Publish
+        run: dotnet publish WebHooksService -c Release -o ./publish --no-restore --no-build
+
+      - uses: actions/upload-artifact@master
+        with:
+          name: publish
+          path: ./publish
+          if-no-files-found: error
+
+  push-to-registry:
+    runs-on: ubuntu-22.04
+    needs: build
+    if: github.ref == 'refs/heads/master'
+
+    permissions:
+      packages: write
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - uses: actions/download-artifact@master
+        with:
+          name: publish
+          path: ./publish
+
+      - name: ENV variables
+        run: |
+          echo "IMAGE_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          echo "TAG_NAME=latest" >> $GITHUB_ENV
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker images
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: ghcr.io/${{ env.IMAGE_NAME }}:${{ env.TAG_NAME }}
