@@ -3,7 +3,13 @@ using Microsoft.AspNetCore.HttpOverrides;
 using WebHooksService;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Configuration.AddJsonFile("web-hooks.json", true);
+
+var webHooksFileSetting = builder.Configuration["WebHooksFile"];
+if (!string.IsNullOrEmpty(webHooksFileSetting))
+{
+    builder.Configuration.AddJsonFile(webHooksFileSetting, true);
+}
+
 builder.Services.AddScoped<WebHooksMiddleware>();
 
 var app = builder.Build();
