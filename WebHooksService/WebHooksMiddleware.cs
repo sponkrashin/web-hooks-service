@@ -1,6 +1,7 @@
 ﻿namespace WebHooksService;
 
 using System.Diagnostics;
+using System.Text.Json;
 
 public class WebHooksMiddleware : IMiddleware
 {
@@ -19,6 +20,20 @@ public class WebHooksMiddleware : IMiddleware
         if (path.StartsWith('/') && path.Length != 1)
         {
             path = path[1..];
+        }
+
+        if (path == "__web-hooks-config__")
+        {
+            var webHooksFileConfiguration = this.configuration.GetSection("WebHooksFile").Value;
+
+            this.logger.LogInformation("{WebHooksFile}", webHooksFileConfiguration);
+
+            foreach (var child in this.configuration.GetSection("WebHooks").GetChildren())
+            {
+                this.logger.LogInformation("{Key}: {@Value}", child.Key, child.Get<IEnumerable<string>>());
+            }
+
+            return;
         }
 
         this.logger.LogDebug("Path: {Path}", path);
