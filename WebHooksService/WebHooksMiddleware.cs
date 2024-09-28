@@ -87,23 +87,46 @@ public class WebHooksMiddleware : IMiddleware
 
             this.logger.LogDebug("Running command {Command} {@Arguments}", command, commandArgs);
 
-            var processStartInfo = new ProcessStartInfo(command, commandArgs);
+            var processStartInfo = new ProcessStartInfo(command, commandArgs)
+            {
+                RedirectStandardOutput = true
+            };
 
             var process = Process.Start(processStartInfo);
 
             this.logger.LogInformation("Process has successfully started");
 
-            await process!.WaitForExitAsync();
+            context.Response.Headers[HeaderNames.ContentType] = "text/event-stream";
+            context.Response.StatusCode = StatusCodes.Status200OK;
+
+            do
+            {
+                var logs = await process!.StandardOutput.ReadLineAsync();
+
+                if (!string.IsNullOrEmpty(logs))
+                {
+                    await context.Response.WriteAsync($"{logs}\n");
+                    await context.Response.Body.FlushAsync();
+                }
+
+                await Task.Delay(500);
+            } while (!process.HasExited);
+
+            var remainingLogs = await process.StandardOutput.ReadToEndAsync();
+
+            if (!string.IsNullOrEmpty(remainingLogs))
+            {
+                await context.Response.WriteAsync(remainingLogs);
+                await context.Response.Body.FlushAsync();
+            }
 
             this.logger.LogInformation("Process has successfully finished");
-
-            context.Response.StatusCode = StatusCodes.Status202Accepted;
         }
         catch (Exception ex)
         {
             this.logger.LogError(ex, "An error occurred during the request");
-            await context.Response.WriteAsync(ex.ToString());
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            await context.Response.WriteAsync(ex.ToString());
         }
     }
 }
