@@ -1,7 +1,10 @@
 ﻿namespace WebHooksService;
 
 using System.Diagnostics;
+using System.Text;
 using System.Text.Json;
+
+using Microsoft.Net.Http.Headers;
 
 public class WebHooksMiddleware : IMiddleware
 {
@@ -24,14 +27,22 @@ public class WebHooksMiddleware : IMiddleware
 
         if (path == "__web-hooks-config__")
         {
+            var stringBuilder = new StringBuilder();
+
             var webHooksFileConfiguration = this.configuration.GetSection("WebHooksFile").Value;
 
-            this.logger.LogInformation("{WebHooksFile}", webHooksFileConfiguration);
+            stringBuilder.AppendLine($"WebHooksFile: {webHooksFileConfiguration}");
 
             foreach (var child in this.configuration.GetSection("WebHooks").GetChildren())
             {
-                this.logger.LogInformation("{Key}: {@Value}", child.Key, child.Get<IEnumerable<string>>());
+                var value = JsonSerializer.Serialize(child.Get<IEnumerable<string>>());
+                stringBuilder.AppendLine($"{child.Key}: {value}");
             }
+
+            context.Response.Headers[HeaderNames.ContentType] = "text/plain";
+            context.Response.StatusCode = StatusCodes.Status200OK;
+
+            await context.Response.WriteAsync(stringBuilder.ToString());
 
             return;
         }
